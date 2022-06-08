@@ -133,11 +133,12 @@ const createPlayerStats = async (): Promise<void> => {
     const matchesWithNoOutsiders = matchesWithResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
     );
+    const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => m2.match_id - m1.match_id);
 
     const stats: PlayerStats[] = [];
 
     for (const player of PLAYERS) {
-        const results = matchesWithNoOutsiders.flatMap(m => m.players).filter(p => p.name == player.name).map(p => p.won);
+        const results = sortedMatches.flatMap(m => m.players).filter(p => p.name == player.name).map(p => p.won);
         const wins = results.filter(r => r).length;
         const overallWinRate = (wins / results.length) || 0;
         const last10wins = results.slice(0, 10).filter(r => r).length;
