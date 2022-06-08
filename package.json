@@ -1,4 +1,5 @@
 {
+  "name": "aoe-stats-updater",
   "devDependencies": {
     "@types/jsdom": "^16.2.14",
     "ts-node": "^10.8.0",
@@ -6,6 +7,13 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^6.0.1",
+    "express": "^4.18.1",
     "jsdom": "^19.0.0"
+  },
+
+  "scripts": {
+    "build": "tsc --build",
+    "start": "node --experimental-fetch lib/main.js ",
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

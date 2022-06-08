@@ -3,3 +3,40 @@ steps:
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: gsutil
     args: ['-h', 'Cache-Control:public, max-age=15', 'cp', '-r', 'web/*', 'gs://aoe-stats.davidbraden.co.uk']
+
+
+  - id: NodeInstall
+    name: node
+    entrypoint: npm
+    args: ['ci']
+
+  - id: TypescriptBuild
+    name: node
+    entrypoint: npm
+    args: ['run', 'build']
+    waitFor: ['NodeInstall']
+
+  - id: BuildUpdater
+    name: 'gcr.io/k8s-skaffold/pack'
+    entrypoint: 'pack'
+    args: [
+      'build',
+      '--builder=gcr.io/buildpacks/builder',
+      '--publish', 'eu.gcr.io/aoe-stats/aoe-stats-updater:$COMMIT_SHA',
+    ]
+    waitFor: ['TypescriptBuild']
+
+  - id: DeployUpdater
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - deploy
+      - aoe-stats-updater
+      - '--project=aoe-stats'
+      - '--region=europe-west2'
+      - '--platform=managed'
+      - '--image=eu.gcr.io/aoe-stats/aoe-stats-updater:$COMMIT_SHA'
+      - '--service-account=aoe-stats-updater@aoe-stats.iam.gserviceaccount.com'
+      - '--allow-unauthenticated'
+    entrypoint: gcloud
+    waitFor: ['BuildUpdater']

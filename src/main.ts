@@ -1,4 +1,5 @@
-import fs from 'fs';
+
+import express from 'express';
 import { Storage } from '@google-cloud/storage';
 
 
@@ -138,9 +139,9 @@ const createPlayerStats = async (): Promise<void> => {
     for (const player of PLAYERS) {
         const results = matchesWithNoOutsiders.flatMap(m => m.players).filter(p => p.name == player.name).map(p => p.won);
         const wins = results.filter(r => r).length;
-        const overallWinRate = wins / results.length;
+        const overallWinRate = (wins / results.length) || 0;
         const last10wins = results.slice(0, 10).filter(r => r).length;
-        const winRateLast10 = last10wins / Math.min(10, results.length);
+        const winRateLast10 = (last10wins / Math.min(10, results.length)) || 0;
         const playerStats = {
             player,
             games: results.length,
@@ -150,16 +151,23 @@ const createPlayerStats = async (): Promise<void> => {
         };
         stats.push(playerStats);
     }
-    await storage.bucket(BUCKET).file(`api/player-stats.json`).save(JSON.stringify(stats));
+    await storage.bucket(BUCKET).file(`api/player-stats.json`).save(JSON.stringify(stats), { metadata: { cacheControl: 'public, max-age=15' }});
 }
 
+const app = express();
 
-(async () => {
+app.get('/refresh', async (req, res) => {
     await storeRawMatchesToGCS();
 
     await aggregateAllMatches();
 
     await createPlayerStats();
-})();
 
+    res.send(`Stats updated`);
+});
 
+const port = parseInt(process.env.PORT || '8080');
+
+app.listen(port, () => {
+  console.log(`aoe-stats-updater: listening on port ${port}`);
+});
