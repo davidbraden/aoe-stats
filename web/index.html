@@ -1,23 +1,130 @@
 <html>
     <head>
-        <script type="text/javascript">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+        
+        <style>
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+main {
+    max-width: 800px;
+
+}
+
+.player {
+    display: flex;
+    flex-direction: row;
+    border: #aaa solid 1px;
+    border-radius: 3px;
+    margin: 5px 0;
+    text-align: center;
+}
+
+.playerName {
+    min-width: 120px;
+    padding: 5px;
+}
+.winRate {
+    min-width: 80px;
+    padding: 5px;
+}
+.results {
+    min-width: 320px;
+    padding: 5px;
+}
+.totalGames {
+    min-width: 80px;
+    padding: 5px;
+}
+
+.bi {
+    padding: 2px;
+}
+
+.bi-check-circle-fill {
+    color: green;
+}
+.bi-x-circle-fill {
+    color: darkred;
+}
+
+.title {
+    display: flex;
+    text-align: center;
+    color: #999;
+    text-transform: uppercase;
+    font-size: smaller;
+    font-weight: bolder;
+}
+.playerNameTitle {
+    min-width: 120px;
+}
+.winRateTitle {
+    min-width: 80px;
+}
+.resultsTitle {
+    min-width: 320px;
+}
+.totalGamesTitle {
+    min-width: 80px;
+}
+
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>AOE Stats</h1>
+
+
+            <div class="title">
+                <span class="playerNameTitle"></span>
+                <span class="winRateTitle">Win Rate</span>
+                <span class="resultsTitle">Latest Results</span>
+                <span class="totalGamesTitle">Total Games</span>
+            </div>
+            <div id="content">
+                
+            </div>
+        </main>
+    </body>
+    <script type="text/javascript">
 
 (async () => {
 
 const dataUrl = "http://aoe-stats.davidbraden.co.uk/api/player-stats.json";
 const result = await fetch(dataUrl);
-console.log(result.json());
+const data = await result.json();
+// const data = [{"name":"Simie","games":64,"overallWinRate":0.453125,"winRateLast10":0.5,"results":[false,false,true,false,true,false,true,false,true,true]},{"name":"Venko","games":40,"overallWinRate":0.475,"winRateLast10":0.3,"results":[false,false,false,true,false,false,true,false,true,false]},{"name":"David","games":53,"overallWinRate":0.49056603773584906,"winRateLast10":0.5,"results":[true,false,false,false,true,true,true,false,true,false]},{"name":"RAD","games":52,"overallWinRate":0.6538461538461539,"winRateLast10":0.7,"results":[true,true,true,false,true,true,true,false,false,true]},{"name":"waluwewe","games":44,"overallWinRate":0.3181818181818182,"winRateLast10":0.3,"results":[false,true,false,false,true,false,false,false,false,true]},{"name":"Calum","games":54,"overallWinRate":0.6111111111111112,"winRateLast10":0.7,"results":[true,true,true,true,false,true,false,true,false,true]},{"name":"Tedo","games":10,"overallWinRate":0.8,"winRateLast10":0.8,"results":[true,true,true,true,false,true,false,true,true,true]},{"name":"watman","games":34,"overallWinRate":0.6764705882352942,"winRateLast10":0.6,"results":[false,false,false,true,true,true,true,false,true,true]},{"name":"Jomoes","games":35,"overallWinRate":0.37142857142857144,"winRateLast10":0.4,"results":[false,false,true,false,false,false,true,true,true,false]},{"name":"andkins","games":8,"overallWinRate":0.375,"winRateLast10":0.375,"results":[false,true,false,false,false,true,false,true]},{"name":"Le Ng","games":2,"overallWinRate":0.5,"winRateLast10":0.5,"results":[true,false]},{"name":"bethatk","games":5,"overallWinRate":0.4,"winRateLast10":0.4,"results":[false,false,true,false,true]}];
 
+data.forEach(player => {
+    const template = document.createElement('template');
+    template.innerHTML = `
+    <div class="player">
+        <div class="playerName">
+            ${player.name}
+        </div>
+        <div class="winRate">
+            ${player.overallWinRate.toFixed(2) * 100}%
+        </div>
+        <div class="results">
+            ${player.results.map(r => r ? '<i class="bi bi-check-circle-fill"></i>': '<i class="bi bi-x-circle-fill"></i>').join('')}
+        </div>
+        <div class="totalGames">
+            ${player.games}
+        </div>
+    </div>
+    `;
+    const node = template.content.cloneNode(true);
+    
+    const content = document.getElementById("content");
+    content.appendChild(node);
+});
 
 })();
-        </script>
-    </head>
-    <body>
 
-        <h1>AOE Stats</h1>
-
-        <div id="content">
-            
-        </div>
-    </body>
+    </script>
 </html>
