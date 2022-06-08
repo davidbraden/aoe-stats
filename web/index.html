@@ -1,5 +1,23 @@
 <html>
+    <head>
+        <script type="text/javascript">
+
+(async () => {
+
+const dataUrl = "http://aoe-stats.davidbraden.co.uk/api/player-stats.json";
+const result = await fetch(dataUrl);
+console.log(result.json());
+
+
+})();
+        </script>
+    </head>
     <body>
+
         <h1>AOE Stats</h1>
+
+        <div id="content">
+            
+        </div>
     </body>
 </html>
