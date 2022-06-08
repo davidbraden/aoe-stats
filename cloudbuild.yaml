@@ -2,4 +2,4 @@ steps:
   - id: Sync static web files
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: gsutil
-    args: ['cp', '-r', 'web/*', 'gs://aoe-stats.davidbraden.co.uk']
+    args: ['-h', 'Cache-Control:public, max-age=15', 'cp', '-r', 'web/*', 'gs://aoe-stats.davidbraden.co.uk']
