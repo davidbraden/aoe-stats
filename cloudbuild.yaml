@@ -1,0 +1,5 @@
+steps:
+  - id: Sync static web files
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: gsutil
+    args: ['cp', 'web/*', 'gs://aoe-stats.davidbraden.co.uk/']
