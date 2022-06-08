@@ -87,6 +87,15 @@ main {
 .totalGamesTitle {
     min-width: 80px;
 }
+.update-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+form {
+    padding-top: 40px;
+}
 
         </style>
     </head>
@@ -100,6 +109,11 @@ main {
             </div>
             <div id="content">
                 
+            </div>
+            <div class="update-section">
+                <form action="https://aoe-stats-updater-ib734xzdaa-nw.a.run.app/refresh" method="GET">
+                    <button>Update data</button>
+                </form>
             </div>
         </main>
     </body>
