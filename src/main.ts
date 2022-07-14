@@ -17,9 +17,14 @@ const PLAYERS: Player[] = [
         steam_id: '76561197988289178',
     },
     {
-        name: 'David',
-        profile_id: '1948286',
-        steam_id: '76561197973846564',
+        name: 'RAD',
+        profile_id: '2418734',
+        steam_id: '76561197993028790',
+    },
+    {
+        name: 'Tedo',
+        profile_id: '4657043',
+        steam_id: '76561198220073969',
     },
     {
         name: 'waluwewe',
@@ -27,19 +32,14 @@ const PLAYERS: Player[] = [
         steam_id: '76561198058125099',
     },
     {
-        name: 'RAD',
-        profile_id: '2418734',
-        steam_id: '76561197993028790',
+        name: 'David',
+        profile_id: '1948286',
+        steam_id: '76561197973846564',
     },
     {
         name: 'Venko',
         profile_id: '2518648',
         steam_id: '76561198066791332',
-    },
-    {
-        name: 'Tedo',
-        profile_id: '4657043',
-        steam_id: '76561198220073969',
     },
     {
         name: 'watman',
