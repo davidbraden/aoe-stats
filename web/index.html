@@ -133,7 +133,7 @@ data.forEach(playerStats => {
             ${playerStats.player.name}
         </div>
         <div class="winRate">
-            ${playerStats.overallWinRate.toFixed(2) * 100}%
+            ${(playerStats.overallWinRate * 100).toFixed(0)}%
         </div>
         <div class="results">
             ${playerStats.results.map(r => r ? '<i class="bi bi-check-circle-fill"></i>': '<i class="bi bi-x-circle-fill"></i>').join('')}
