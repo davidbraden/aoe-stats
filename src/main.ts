@@ -12,6 +12,11 @@ const PLAYERS: Player[] = [
         steam_id: '76561198037279369',
     },
     {
+        name: 'Tedo',
+        profile_id: '4657043',
+        steam_id: '76561198220073969',
+    },
+    {
         name: 'RAD',
         profile_id: '2418734',
         steam_id: '76561197993028790',
@@ -20,11 +25,6 @@ const PLAYERS: Player[] = [
         name: 'Simie',
         profile_id: '1512338',
         steam_id: '76561197988289178',
-    },
-    {
-        name: 'Tedo',
-        profile_id: '4657043',
-        steam_id: '76561198220073969',
     },
     {
         name: 'waluwewe',
