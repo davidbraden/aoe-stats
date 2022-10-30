@@ -1,6 +1,7 @@
 
 import express from 'express';
 import { Storage } from '@google-cloud/storage';
+import { load } from 'cheerio';
 
 
 const BUCKET = 'aoe-stats.davidbraden.co.uk';
@@ -83,42 +84,15 @@ interface PlayerStats {
     // teamMateWinPercent: Map<string, number>,
 }
 
-
-const getMatches = async (profile_id: string): Promise<string> => {
-    const url = `https://aoe2.net/api/player/matches?game=aoe2de&profile_id=${profile_id}&count=1000`;
-    const response = await fetch(url);
-    return await response.text();
+interface MatchPlayer {
+    name: string
+    profile_id: string
+    won: boolean
 }
 
-const rawPath = (): string => `raw/dt=${new Date(Date.now()).toISOString().slice(0, 10)}`;
-
-const storeRawMatchesToGCS = async (): Promise<void> => {
-    const storage = new Storage();
-    for (const p of PLAYERS) {
-        const response = await getMatches(p.profile_id);
-        const blobName = `${rawPath()}/${p.profile_id}`;
-        await storage.bucket(BUCKET).file(blobName).save(response);
-    }
-}
-
-const aggregateAllMatches = async (): Promise<void> => {
-    const storage = new Storage();
-    let allMatches: Map<string, any>;
-    try {
-        const contents = await storage.bucket(BUCKET).file(`api/matches.json`).download();
-        const json = JSON.parse(contents.toString());
-        allMatches = new Map(Object.entries(json));
-    } catch {
-        allMatches = new Map();
-    }
-    for (const p of PLAYERS) {
-        const contents = await storage.bucket(BUCKET).file(`${rawPath()}/${p.profile_id}`).download();
-        const matches: any[] = JSON.parse(contents.toString());
-        matches.forEach(m => {
-            allMatches.set(m.match_id, m);
-        });
-    }
-    await storage.bucket(BUCKET).file(`api/matches.json`).save(JSON.stringify(Object.fromEntries(allMatches)));
+interface Match {
+    match_id: string
+    players: MatchPlayer[]
 }
 
 const createPlayerStats = async (): Promise<void> => {
@@ -155,12 +129,101 @@ const createPlayerStats = async (): Promise<void> => {
     await storage.bucket(BUCKET).file(`api/player-stats.json`).save(JSON.stringify(stats), { metadata: { cacheControl: 'public, max-age=15' }});
 }
 
+const getExistingMatches = async (): Promise<Map<string, Match>> => {
+    const storage = new Storage();
+    let matches: Map<string, Match>;
+    console.log('fetching')
+    try {
+        const contents = await storage.bucket(BUCKET).file(`api/matches.json`).download();
+        const json = JSON.parse(contents.toString());
+        const matchArray = Object.entries<any>(json).map(tuple => <Match>{
+            match_id: tuple[0],
+            players: tuple[1].players.map(p => ({
+                name: p.name,
+                profile_id: p.profile_id,
+                won: p.won,
+            })),
+        });
+        matches = new Map(matchArray.map(m => [m.match_id, m]));
+    } catch {
+        matches = new Map();
+    }
+    return matches
+}
+
+// const triggerPlayerDataRefresh = async (player_id: string): Promise<void> => {
+
+// }
+
+const findNewMatches = async (player_id: string, existing_matches: Set<string>): Promise<Set<string>> => {
+    let page = 1;
+    let result = new Set<string>();
+    while (true) {
+        const url = `https://www.aoe2insights.com/user/${player_id}/matches/?page=${page}`;
+        const response = await fetch(url);
+        const html = await response.text();
+        const $ = load(html);
+        const links = $('a').toArray().map(l => l.attribs['href']);
+        const matchLinks = links.filter(l => l && l.startsWith('/match/'));
+        const matches = new Set(matchLinks.map(l => l.split('/')[2]));
+        const newMatches = [...matches].filter(m => !existing_matches.has(m));
+        result = new Set([...newMatches, ...result]);
+        const pageHasExistingMatches = [...matches].filter(m => existing_matches.has(m)).length > 0;
+        if (!pageHasExistingMatches && newMatches.length > 0) {
+            page += 1
+        } else {
+            return result;
+        }
+    }
+}
+
+const fetchMatch = async (match_id: string): Promise<string> => {
+    const url = `https://www.aoe2insights.com/match/${match_id}/`;
+    const response = await fetch(url);
+    return await response.text();
+}
+
+const parseMatch = (match_id: string, html: string): Match  => {
+    const $ = load(html);
+    const playerLinks = $('.match table a').toArray();
+    const players = playerLinks.map(p => ({
+        name: $(p).text().trim(),
+        profile_id: p.attribs['href'].split('/')[2],
+        won: !$(p).parent().hasClass('player-won')
+    }));
+    return {
+        match_id,
+        players,
+    }
+}
+
+const saveMatches = async (matches: Map<string, Match>): Promise<void> => {
+    const storage = new Storage();
+    await storage.bucket(BUCKET).file(`api/matches.json`).save(JSON.stringify(Object.fromEntries(matches)));
+}
+
+
 const app = express();
 
-app.get('/refresh', async (req, res) => {
-    await storeRawMatchesToGCS();
 
-    await aggregateAllMatches();
+app.get('/refresh', async (req, res) => {
+    const matches = await getExistingMatches();
+    const existing_matches: Set<string> = new Set(matches.keys());
+
+    let new_matches = new Set<string>();
+    for (const player of PLAYERS) {
+        const player_new_matches = await findNewMatches(player.profile_id, existing_matches);
+        new_matches = new Set([...player_new_matches, ...new_matches]);
+    }
+
+    if (new_matches.size > 0) {
+        for (const match_id of new_matches) {
+            const matchHtml = await fetchMatch(match_id);
+            const match = parseMatch(match_id, matchHtml);
+            matches.set(match.match_id, match);
+        }
+        await saveMatches(matches);
+    }
 
     await createPlayerStats();
 
