@@ -92,9 +92,12 @@ main {
     align-items: center;
     justify-content: center;
 }
+.update-section button {
+    margin-left: 8px;
+}
 
 form {
-    padding-top: 40px;
+    padding-top: 15px;
 }
 
         </style>
@@ -111,6 +114,10 @@ form {
                 
             </div>
             <div class="update-section">
+                <button onclick="clickAction = hide;">Remove player</button>
+                <button onclick="clickAction = togglePosition;">Select team</button>
+                <button onclick="">Team history</button>
+                <button onclick="assignCivs()">Generate civs</button>
                 <form action="https://aoe-stats-updater-ib734xzdaa-nw.a.run.app/refresh" method="GET">
                     <button>Update data</button>
                 </form>
@@ -128,7 +135,7 @@ const data = await result.json();
 data.forEach(playerStats => {
     const template = document.createElement('template');
     template.innerHTML = `
-    <div class="player">
+    <div class="player" onclick="clickAction(this)">
         <div class="playerName">
             ${playerStats.player.name}
         </div>
@@ -151,5 +158,56 @@ data.forEach(playerStats => {
 
 })();
 
+
+const hide = (el) => {
+    el.style.display = 'none';
+};
+
+const togglePosition = (el) => {
+    if (el.style['margin-left'] === '120px') {
+        el.style['margin-left'] = null;
+    } else {
+        el.style['margin-left'] = '120px';
+    }
+}
+
+let clickAction = (el) => console.log(el);
+
+const currentPlayers = () => {
+    const allPlayers = document.getElementsByClassName('playerName');
+    const names = new Set()
+    for (player of allPlayers) {
+        if (player.parentElement.style.display !== 'none') {
+            names.add(player.textContent.trim())
+        }
+    }
+    return names
+}
+
+const ORIGINAL_CIVS = ['Goths', 'Franks', 'Britons', 'Vikings', 'Teutons', 'Chinese', 'Japanese', 'Mongols', 'Persions', 'Saracens', 'Turks', 'Byzantines', 'Celts']
+const CIVS_2 = ['Aztecs', 'Mayans', 'Koreans', 'Huns', 'Spanish']
+const CIVS_3 = ['Incas', 'Italians', 'Magyars', 'Slavs']
+const CIVS_4 = ['Malians', 'Ethiopians', 'Berbers', 'Portugese']
+const CIVS_5 = ['Khmer', 'Vietnamese', 'Malay', 'Burmese']
+const CIVS_6 = ['Lithuanians', 'Tatars', 'Cumans', 'Bulgarians']
+const CIVS_7 = ['Burgundians', 'Sicilians']
+const CIVS_8 = ['Poles', 'Bohemians']
+const CIVS_9 = ['Bengalis', 'Dravidians', 'Hindustanis', 'Gurjaras']
+let CIVS = ORIGINAL_CIVS.concat(CIVS_2, CIVS_3, CIVS_4, CIVS_5, CIVS_6, CIVS_7, CIVS_8, CIVS_9);
+
+Array.prototype.random = function () {
+  return this[Math.floor((Math.random()*this.length))];
+}
+
+const assignCivs = () => {
+    const allPlayers = document.getElementsByClassName('playerName');
+    for (player of allPlayers) {
+        if (player.parentElement.style.display !== 'none') {
+            const civ = CIVS.random();
+            CIVS = CIVS.filter(item => item !== civ)
+            player.textContent += ` - ${civ}`
+        }
+    }
+}
     </script>
 </html>
