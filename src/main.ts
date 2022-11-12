@@ -2,6 +2,7 @@
 import express from 'express';
 import { Storage } from '@google-cloud/storage';
 import { load } from 'cheerio';
+import cors from 'cors';
 
 
 const BUCKET = 'aoe-stats.davidbraden.co.uk';
@@ -203,7 +204,9 @@ const saveMatches = async (matches: Map<string, Match>): Promise<void> => {
 
 
 const app = express();
-
+app.use(cors({
+    origin: 'http://aoe-stats.davidbraden.co.uk'
+}));
 
 app.get('/refresh', async (req, res) => {
     const matches = await getExistingMatches();
