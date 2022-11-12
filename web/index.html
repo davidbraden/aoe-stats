@@ -116,7 +116,7 @@ form {
             <div class="update-section">
                 <button onclick="clickAction = hide;">Remove player</button>
                 <button onclick="clickAction = togglePosition;">Select team</button>
-                <button onclick="">Team history</button>
+                <button onclick="teamHistory()">Team history</button>
                 <button onclick="assignCivs()">Generate civs</button>
                 <form action="https://aoe-stats-updater-ib734xzdaa-nw.a.run.app/refresh" method="GET">
                     <button>Update data</button>
@@ -173,17 +173,6 @@ const togglePosition = (el) => {
 
 let clickAction = (el) => console.log(el);
 
-const currentPlayers = () => {
-    const allPlayers = document.getElementsByClassName('playerName');
-    const names = new Set()
-    for (player of allPlayers) {
-        if (player.parentElement.style.display !== 'none') {
-            names.add(player.textContent.trim())
-        }
-    }
-    return names
-}
-
 const ORIGINAL_CIVS = ['Goths', 'Franks', 'Britons', 'Vikings', 'Teutons', 'Chinese', 'Japanese', 'Mongols', 'Persions', 'Saracens', 'Turks', 'Byzantines', 'Celts']
 const CIVS_2 = ['Aztecs', 'Mayans', 'Koreans', 'Huns', 'Spanish']
 const CIVS_3 = ['Incas', 'Italians', 'Magyars', 'Slavs']
@@ -208,6 +197,28 @@ const assignCivs = () => {
             player.textContent += ` - ${civ}`
         }
     }
+}
+
+const currentPlayers = () => {
+    const allPlayers = document.getElementsByClassName('playerName');
+    const names = new Set()
+    for (player of allPlayers) {
+        if (player.parentElement.style.display !== 'none') {
+            names.add(player.textContent.trim())
+        }
+    }
+    return names
+}
+
+
+const teamHistory = async () => {
+    let playersMatchesUrlBase = 'https://aoe-stats-updater-ib734xzdaa-nw.a.run.app/players-matches?'
+    for (player of currentPlayers()) {
+        playersMatchesUrlBase += `player=${player}&`
+    }
+    const response = await fetch(playersMatchesUrlBase);
+    const matches = await response.json();
+    console.log(matches);
 }
     </script>
 </html>

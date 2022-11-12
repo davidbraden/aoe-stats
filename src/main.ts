@@ -132,7 +132,6 @@ const createPlayerStats = async (): Promise<void> => {
 const getExistingMatches = async (): Promise<Map<string, Match>> => {
     const storage = new Storage();
     let matches: Map<string, Match>;
-    console.log('fetching')
     try {
         const contents = await storage.bucket(BUCKET).file(`api/matches.json`).download();
         const json = JSON.parse(contents.toString());
@@ -228,6 +227,21 @@ app.get('/refresh', async (req, res) => {
     await createPlayerStats();
 
     res.send(`Stats updated`);
+});
+
+function eqSet(as, bs) {
+    if (as.size !== bs.size) return false;
+    for (var a of as) if (!bs.has(a)) return false;
+    return true;
+}
+
+app.get('/players-matches', async (req, res) => {
+    const matches = await getExistingMatches();
+    const players = new Set(req.query.player)
+    
+    const playersMatches = [...matches.values()].filter(m => eqSet(new Set(m.players.map(p => p.name)), players))
+    
+    res.json(playersMatches);
 });
 
 const port = parseInt(process.env.PORT || '8080');
