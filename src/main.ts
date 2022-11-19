@@ -106,7 +106,7 @@ const createPlayerStats = async (): Promise<void> => {
 
     const allMatches: Map<string, any> = new Map(Object.entries(json));
 
-    const matchesWithResult = [...allMatches.values()].filter(m => m.players.some(r => r.won != null));
+    const matchesWithResult = [...allMatches.values()].filter(m => m.players.some(r => r.won == true) &&  m.players.some(r => r.won == false));
 
     const matchesWithNoOutsiders = matchesWithResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
