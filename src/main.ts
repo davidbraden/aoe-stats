@@ -89,11 +89,14 @@ interface MatchPlayer {
     name: string
     profile_id: string
     won: boolean
+    civ: string
 }
 
 interface Match {
     match_id: string
     players: MatchPlayer[]
+    mode: string
+    map: string
 }
 
 const createPlayerStats = async (): Promise<void> => {
@@ -160,6 +163,7 @@ const findNewMatches = async (player_id: string, existing_matches: Set<string>):
     let result = new Set<string>();
     while (true) {
         const url = `https://www.aoe2insights.com/user/${player_id}/matches/?page=${page}`;
+        console.log(`Fetching ${url}`);
         const response = await fetch(url);
         const html = await response.text();
         const $ = load(html);
@@ -178,6 +182,7 @@ const findNewMatches = async (player_id: string, existing_matches: Set<string>):
 }
 
 const fetchMatch = async (match_id: string): Promise<string> => {
+    console.log(`Fetching match ${match_id}`);
     const url = `https://www.aoe2insights.com/match/${match_id}/`;
     const response = await fetch(url);
     return await response.text();
@@ -186,14 +191,20 @@ const fetchMatch = async (match_id: string): Promise<string> => {
 const parseMatch = (match_id: string, html: string): Match  => {
     const $ = load(html);
     const playerLinks = $('.match table a').toArray();
-    const players = playerLinks.map(p => ({
+    const civs = $('.match td:nth-child(3)').toArray().map(c => $(c).text().trim());
+    const players = playerLinks.map((p, i) => ({
         name: $(p).text().trim(),
         profile_id: p.attribs['href'].split('/')[2],
-        won: !$(p).parent().hasClass('player-won')
+        won: !$(p).parent().hasClass('player-won'),
+        civ: civs[i]
     }));
+    const mode = $('th:contains(Game mode)').parent().find('td').text();
+    const map = $('th:contains(Location)').parent().find('td').text();
     return {
         match_id,
         players,
+        map,
+        mode
     }
 }
 
@@ -211,6 +222,7 @@ app.use(cors({
 app.get('/refresh', async (req, res) => {
     const matches = await getExistingMatches();
     const existing_matches: Set<string> = new Set(matches.keys());
+    console.log(`${existing_matches.size} existing matches`)
 
     let new_matches = new Set<string>();
     for (const player of PLAYERS) {
@@ -219,6 +231,7 @@ app.get('/refresh', async (req, res) => {
     }
 
     if (new_matches.size > 0) {
+        console.log(`Found ${new_matches.size} new matches`)
         for (const match_id of new_matches) {
             const matchHtml = await fetchMatch(match_id);
             const match = parseMatch(match_id, matchHtml);
@@ -252,3 +265,8 @@ const port = parseInt(process.env.PORT || '8080');
 app.listen(port, () => {
   console.log(`aoe-stats-updater: listening on port ${port}`);
 });
+
+
+(async () => {
+    
+})()
