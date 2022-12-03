@@ -107,8 +107,11 @@ const createPlayerStats = async (): Promise<void> => {
     const allMatches: Map<string, any> = new Map(Object.entries(json));
 
     const matchesWithResult = [...allMatches.values()].filter(m => m.players.some(r => r.won == true) &&  m.players.some(r => r.won == false));
+    const lastMatchWithoutResult = [...Object.values(allMatches)].filter(m => m.players.every(r => r.won == true)).reverse()[0];
+    const matchesSinceAllHaveResult = matchesWithResult.filter(m => m.match_id > Number(lastMatchWithoutResult.match_id));
 
-    const matchesWithNoOutsiders = matchesWithResult.filter(
+
+    const matchesWithNoOutsiders = matchesSinceAllHaveResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
     );
     const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => m2.match_id - m1.match_id);
