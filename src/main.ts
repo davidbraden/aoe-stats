@@ -96,22 +96,13 @@ interface Match {
     players: MatchPlayer[]
 }
 
-const createPlayerStats = async (): Promise<void> => {
-    const storage = new Storage();
-    const contents = await storage.bucket(BUCKET).file(`api/matches.json`).download();
-    const json = JSON.parse(contents.toString());
-
-    const allMatches: Map<string, any> = new Map(Object.entries(json));
-
+const createPlayerStats = (allMatches: Map<string, Match>): PlayerStats[] => {
     const matchesWithResult = [...allMatches.values()].filter(m => m.players.some(r => r.won == true) &&  m.players.some(r => r.won == false));
-    const lastMatchWithoutResult = [...allMatches.values()].filter(m => m.players.every(r => r.won == true)).reverse()[0];
-    const matchesSinceAllHaveResult = matchesWithResult.filter(m => m.match_id > Number(lastMatchWithoutResult.match_id));
 
-
-    const matchesWithNoOutsiders = matchesSinceAllHaveResult.filter(
+    const matchesWithNoOutsiders = matchesWithResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
     );
-    const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => m2.match_id - m1.match_id);
+    const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => parseInt(m2.match_id) - parseInt(m1.match_id));
 
     const stats: PlayerStats[] = [];
 
@@ -130,7 +121,13 @@ const createPlayerStats = async (): Promise<void> => {
         };
         stats.push(playerStats);
     }
+    return stats;
+}
+
+const saveStats = async (stats: PlayerStats[]): Promise<void> => {
+    const storage = new Storage();
     await storage.bucket(BUCKET).file(`api/player-stats.json`).save(JSON.stringify(stats), { metadata: { cacheControl: 'public, max-age=15' }});
+
 }
 
 const getExistingMatches = async (): Promise<Map<string, Match>> => {
@@ -222,7 +219,8 @@ app.get('/refresh', async (req, res) => {
         }
     }
     await saveMatches(matches);
-    await createPlayerStats();
+    const stats = createPlayerStats(matches);
+    await saveStats(stats)
 
     res.send(`Stats updated`);
 });
