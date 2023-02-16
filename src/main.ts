@@ -89,14 +89,11 @@ interface MatchPlayer {
     name: string
     profile_id: string
     won: boolean
-    civ: string
 }
 
 interface Match {
     match_id: string
     players: MatchPlayer[]
-    mode: string
-    map: string
 }
 
 const createPlayerStats = async (): Promise<void> => {
@@ -157,57 +154,48 @@ const getExistingMatches = async (): Promise<Map<string, Match>> => {
     return matches
 }
 
-// const triggerPlayerDataRefresh = async (player_id: string): Promise<void> => {
-
-// }
-
-const findNewMatches = async (player_id: string, existing_matches: Set<string>): Promise<Set<string>> => {
-    let page = 1;
-    let result = new Set<string>();
-    while (true) {
-        const url = `https://www.aoe2insights.com/user/${player_id}/matches/?page=${page}`;
-        console.log(`Fetching ${url}`);
+const getPlayerMatches = async (player_id: string, page: string): Promise<Match[]> => {
+    const url = `https://www.aoe2insights.com/user/${player_id}/matches/?page=${page}`;
+    console.log(`Fetching ${url}`);
+    try {
         const response = await fetch(url);
         const html = await response.text();
         const $ = load(html);
-        const links = $('a').toArray().map(l => l.attribs['href']);
-        const matchLinks = links.filter(l => l && l.startsWith('/match/'));
-        const matches = new Set(matchLinks.map(l => l.split('/')[2]));
-        const newMatches = [...matches].filter(m => !existing_matches.has(m));
-        result = new Set([...newMatches, ...result]);
-        const pageHasExistingMatches = [...matches].filter(m => existing_matches.has(m)).length > 0;
-        if (!pageHasExistingMatches && newMatches.length > 0) {
-            page += 1
-        } else {
-            return result;
-        }
-    }
-}
+        const matchTiles = $("div.match-tile").toArray();
+        const matches = matchTiles.map((tile) => {
+        const links = $("a", tile)
+            .toArray()
+            .map((l) => l.attribs["href"]);
+        const match_id = links
+            .find((l) => l && l.startsWith("/match/"))
+            .split("/")[2];
 
-const fetchMatch = async (match_id: string): Promise<string> => {
-    console.log(`Fetching match ${match_id}`);
-    const url = `https://www.aoe2insights.com/match/${match_id}/`;
-    const response = await fetch(url);
-    return await response.text();
-}
-
-const parseMatch = (match_id: string, html: string): Match  => {
-    const $ = load(html);
-    const playerLinks = $('.match table a').toArray();
-    const civs = $('.match td:nth-child(3)').toArray().map(c => $(c).text().trim());
-    const players = playerLinks.map((p, i) => ({
-        name: $(p).text().trim(),
-        profile_id: p.attribs['href'].split('/')[2],
-        won: !$(p).parent().hasClass('player-won'),
-        civ: civs[i]
-    }));
-    const mode = $('th:contains(Game mode)').parent().find('td').text();
-    const map = $('th:contains(Location)').parent().find('td').text();
-    return {
-        match_id,
-        players,
-        map,
-        mode
+        const teams = $("ul.team", tile).toArray();
+        const players = teams
+            .map((team) => {
+            const teamPlayers = $("a", team)
+                .toArray()
+                .map((player) => {
+                const profile_id = player.attribs["href"].split("/")[2];
+                const name = $(player).text().trim();
+                const won = $("i.won", team).toArray().length > 0;
+                return {
+                    name,
+                    profile_id,
+                    won,
+                };
+                });
+            return teamPlayers;
+            })
+            .flat();
+        return {
+            match_id,
+            players,
+        };
+        });
+        return matches;
+    } catch {
+        return [];
     }
 }
 
@@ -216,7 +204,6 @@ const saveMatches = async (matches: Map<string, Match>): Promise<void> => {
     await storage.bucket(BUCKET).file(`api/matches.json`).save(JSON.stringify(Object.fromEntries(matches)));
 }
 
-
 const app = express();
 app.use(cors({
     origin: 'http://aoe-stats.davidbraden.co.uk'
@@ -224,25 +211,17 @@ app.use(cors({
 
 app.get('/refresh', async (req, res) => {
     const matches = await getExistingMatches();
-    const existing_matches: Set<string> = new Set(matches.keys());
-    console.log(`${existing_matches.size} existing matches`)
+    console.log(`${matches.size} existing matches`)
 
-    let new_matches = new Set<string>();
     for (const player of PLAYERS) {
-        const player_new_matches = await findNewMatches(player.profile_id, existing_matches);
-        new_matches = new Set([...player_new_matches, ...new_matches]);
-    }
-
-    if (new_matches.size > 0) {
-        console.log(`Found ${new_matches.size} new matches`)
-        for (const match_id of new_matches) {
-            const matchHtml = await fetchMatch(match_id);
-            const match = parseMatch(match_id, matchHtml);
-            matches.set(match.match_id, match);
+        for (let i = 1; i< 7; i++) {
+            const newMatches = await getPlayerMatches(player.profile_id, i.toString());
+            newMatches.forEach(m => {
+                matches.set(m.match_id, m)
+            });
         }
-        await saveMatches(matches);
     }
-
+    await saveMatches(matches);
     await createPlayerStats();
 
     res.send(`Stats updated`);
@@ -270,6 +249,5 @@ app.listen(port, () => {
 });
 
 
-(async () => {
-    
-})()
+// (async () => {
+// })()
