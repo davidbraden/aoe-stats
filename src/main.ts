@@ -50,8 +50,8 @@ const PLAYERS: Player[] = [
     },
     {
         name: 'Le NG',
-        profile_id: '2932142',
-        steam_id: '76561197996434115',
+        profile_id: '1609821',
+        steam_id: '',
     },
     {
         name: 'Jomoes',
