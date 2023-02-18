@@ -79,14 +79,18 @@ interface Player {
     profile_id: string,
     steam_id: string
 }
+type TeamMateWins = { 
+    [id: string]: number; 
+}
 
 interface PlayerStats {
     player: Player,
     games: number,
+    wins: number,
     overallWinRate: number,
     winRateLast10: number,
     results: boolean[],
-    // teamMateWinPercent: Map<string, number>,
+    teamMateWins: TeamMateWins,
 }
 
 interface MatchPlayer {
@@ -111,19 +115,43 @@ const createPlayerStats = (allMatches: Map<string, Match>): PlayerStats[] => {
     const stats: PlayerStats[] = [];
 
     for (const player of PLAYERS) {
-        const results = sortedMatches.flatMap(m => m.players).filter(p => p.name == player.name).map(p => p.won);
-        const wins = results.filter(r => r).length;
-        const overallWinRate = (wins / results.length) || 0;
-        const last10wins = results.slice(0, 10).filter(r => r).length;
-        const winRateLast10 = (last10wins / Math.min(10, results.length)) || 0;
-        const playerStats = {
-            player,
-            games: results.length,
-            overallWinRate,
-            winRateLast10,
-            results: results.slice(0, 10),
-        };
-        stats.push(playerStats);
+      const results = sortedMatches
+        .flatMap((m) => m.players)
+        .filter((p) => p.profile_id == player.profile_id)
+        .map((p) => p.won);
+      const wins = results.filter((r) => r).length;
+      const overallWinRate = wins / results.length || 0;
+      const last10wins = results.slice(0, 10).filter((r) => r).length;
+      const winRateLast10 = last10wins / Math.min(10, results.length) || 0;
+      const teamMates = PLAYERS.filter(
+        (p) => p.profile_id != player.profile_id
+      );
+      const teamMateWins = 
+        teamMates.map((team_mate) => {
+          const matcheWonWithTeamMate = sortedMatches
+            .filter((m) =>
+              m.players.some((p) => p.profile_id == player.profile_id && p.won)
+            )
+            .filter((m) =>
+              m.players.some(
+                (p) => p.profile_id == team_mate.profile_id && p.won
+              )
+            );
+          return {
+            [team_mate.name]: matcheWonWithTeamMate.length,
+          };
+        })
+        .reduce((a, b) => Object.assign(a, b), {});
+      const playerStats = {
+        player,
+        games: results.length,
+        wins,
+        overallWinRate,
+        winRateLast10,
+        results: results.slice(0, 10),
+        teamMateWins,
+      };
+      stats.push(playerStats);
     }
     return stats;
 }
@@ -254,5 +282,8 @@ app.listen(port, () => {
 });
 
 
-// (async () => {
-// })()
+(async () => {
+    const matches = await getExistingMatches();
+    const s = createPlayerStats(matches);
+    console.log(JSON.stringify(s))
+})()
