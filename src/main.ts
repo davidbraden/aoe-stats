@@ -70,6 +70,10 @@ const PLAYERS: Player[] = [
     },
 ];
 
+const ABANDONED_MATCHES = [
+    '209876620',
+]
+
 interface Player {
     name: string,
     profile_id: string,
@@ -218,6 +222,9 @@ app.get('/refresh', async (req, res) => {
             });
         }
     }
+    ABANDONED_MATCHES.forEach(match_id => {
+        matches.delete(match_id);
+    });
     await saveMatches(matches);
     const stats = createPlayerStats(matches);
     await saveStats(stats)
