@@ -72,6 +72,8 @@ const PLAYERS: Player[] = [
 
 const ABANDONED_MATCHES = [
     '209876620',
+    '211986079',
+    '211987594',
 ]
 
 interface Player {
