@@ -14,9 +14,9 @@ const PLAYERS: Player[] = [
         steam_id: '76561198037279369',
     },
     {
-        name: 'Tedo',
-        profile_id: '4657043',
-        steam_id: '76561198220073969',
+        name: 'waluwewe',
+        profile_id: '1533683',
+        steam_id: '76561198058125099',
     },
     {
         name: 'RAD',
@@ -24,9 +24,9 @@ const PLAYERS: Player[] = [
         steam_id: '76561197993028790',
     },
     {
-        name: 'waluwewe',
-        profile_id: '1533683',
-        steam_id: '76561198058125099',
+        name: 'Tedo',
+        profile_id: '4657043',
+        steam_id: '76561198220073969',
     },
     {
         name: 'Simie',
@@ -74,6 +74,7 @@ const ABANDONED_MATCHES = [
     '209876620',
     '211986079',
     '211987594',
+    '230273876',
 ]
 
 interface Player {
