@@ -29,16 +29,17 @@ const PLAYERS: Player[] = [
         steam_id: '76561198058125099',
     },
     
-    {
-        name: 'Venko',
-        profile_id: '2518648',
-        steam_id: '76561198066791332',
-    },
-    
+
     {
         name: 'Simie',
         profile_id: '1512338',
         steam_id: '76561197988289178',
+    },
+    
+    {
+        name: 'Venko',
+        profile_id: '2518648',
+        steam_id: '76561198066791332',
     },
     {
         name: 'David',
@@ -114,7 +115,7 @@ const createPlayerStats = (allMatches: Map<string, Match>): PlayerStats[] => {
 
     const matchesWithNoOutsiders = matchesWithResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
-    );
+    ).filter(m.players.length > 2);
     const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => parseInt(m2.match_id) - parseInt(m1.match_id));
 
     const stats: PlayerStats[] = [];
