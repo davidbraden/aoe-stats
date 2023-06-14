@@ -115,7 +115,7 @@ const createPlayerStats = (allMatches: Map<string, Match>): PlayerStats[] => {
 
     const matchesWithNoOutsiders = matchesWithResult.filter(
         m => ! m.players.some(mp => !PLAYERS.map(p => p.name).includes(mp.name))
-    ).filter(m.players.length > 2);
+    ).filter(m => m.players.length > 2);
     const sortedMatches = matchesWithNoOutsiders.sort((m1, m2) => parseInt(m2.match_id) - parseInt(m1.match_id));
 
     const stats: PlayerStats[] = [];
