@@ -79,6 +79,8 @@ const ABANDONED_MATCHES = [
     '211987594',
     '230273876',
     '240484669',
+    '243878722',
+    '243880721'
 ]
 
 interface Player {
